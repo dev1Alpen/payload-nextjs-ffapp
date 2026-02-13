@@ -112,7 +112,7 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       host: process.env.DB_HOST, // Use the environment variables for DB connection
-      port: process.env.DB_PORT,
+      port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME, // Ensure this is pointing to the correct database name
