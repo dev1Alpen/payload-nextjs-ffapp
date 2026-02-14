@@ -21,18 +21,18 @@ interface NavItem {
 // Base navigation items (pages will be added dynamically)
 const baseNavItems: NavItem[] = [
   { label: 'HOMEPAGE', href: '/' },
-  { 
-    label: 'ABOUT US', 
-    href: '/about', 
+  {
+    label: 'ABOUT US',
+    href: '/about',
     hasDropdown: true,
     dropdownItems: [
       { label: 'Geschichte', href: '/geschichte' },
       { label: 'Kommando', href: '/kommando' },
-      { label: 'Kanzlei', href: '/clerk' },
+      { label: 'Chargen', href: '/clerk' },
       { label: 'Aktive Mitglieder', href: '/active-members' },
       { label: 'Feuerwehrjugend', href: '/fire-brigade-youth' },
       { label: 'Reserve', href: '/reserve' },
-    ]
+    ],
   },
   { label: 'NEWS', href: '/all_posts', hasDropdown: true, dynamicDropdown: true },
   { label: 'GALLERY', href: '/gallery' },
@@ -49,15 +49,17 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Array<{
-    id: number
-    title: string
-    slug: string
-    category: string | null
-    categoryLabel: string
-    imageUrl: string | null
-    description?: string
-  }>>([])
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      id: number
+      title: string
+      slug: string
+      category: string | null
+      categoryLabel: string
+      imageUrl: string | null
+      description?: string
+    }>
+  >([])
   const [isSearching, setIsSearching] = useState(false)
   // Get categories, pages, and site settings from shared context
   const { categories, categoriesLoading, pages, pagesLoading, siteSettings } = useSharedData()
@@ -105,22 +107,21 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     setLocale('de')
   }, [searchParams, initialLocale])
 
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as HTMLElement
-      
+
       // Don't close if clicking on a link - let the link handle navigation first
       if (target.tagName === 'A') {
         return
       }
-      
+
       // Don't close if clicking on a button (including dropdown toggle buttons)
       // The button's onClick with stopPropagation will prevent this from firing
       if (target.tagName === 'BUTTON' || target.closest('button')) {
         return
       }
-      
+
       // Check if click is inside any dropdown container
       // This includes the dropdown menu (but not the button, which we already checked above)
       let clickedInsideDropdown = false
@@ -129,22 +130,22 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
           clickedInsideDropdown = true
         }
       })
-      
+
       // Don't close dropdowns if clicking inside a dropdown container
       if (clickedInsideDropdown) {
         return
       }
-      
+
       if (mobileRef.current && !mobileRef.current.contains(target)) {
         setMobileOpen(false)
       }
-      
+
       if (searchModalRef.current && !searchModalRef.current.contains(target)) {
         setSearchModalOpen(false)
         setSearchQuery('')
         setSearchResults([])
       }
-      
+
       // Close dropdowns when clicking outside
       setOpenDropdown(null)
     }
@@ -192,9 +193,9 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
         const searchUrl = `/api/search?q=${encodeURIComponent(searchQuery.trim())}&lang=${locale}`
         console.log('Fetching search results from:', searchUrl)
         const response = await fetch(searchUrl)
-        
+
         console.log('Search response status:', response.status)
-        
+
         if (response.ok) {
           const data = await response.json()
           console.log('Search response data:', data)
@@ -233,22 +234,19 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     setOpenDropdown((current) => (current === label ? null : label))
   }
 
-  const handleSearchResultClick = (post: {
-    id: number
-    slug: string
-    category: string | null
-  }) => {
+  const handleSearchResultClick = (post: { id: number; slug: string; category: string | null }) => {
     // Safety check: ensure post exists and has required properties
     if (!post || !post.id) {
       console.error('Invalid post in search result:', post)
       return
     }
-    
+
     try {
       const categoryPath = post.category ? getCategoryPath(post.category) : 'news'
-      const postUrl = post.slug && post.slug.trim() 
-        ? `/${categoryPath}/${post.slug}?lang=${locale}`
-        : `/${categoryPath}/${post.id}?lang=${locale}`
+      const postUrl =
+        post.slug && post.slug.trim()
+          ? `/${categoryPath}/${post.slug}?lang=${locale}`
+          : `/${categoryPath}/${post.id}?lang=${locale}`
       router.push(postUrl)
       setSearchModalOpen(false)
       setSearchQuery('')
@@ -264,7 +262,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       jugend: 'young',
       ausbildung: 'training',
       bewerb: 'competition',
-      'bürgerinformation': 'citizen-info',
+      bürgerinformation: 'citizen-info',
       chargen: 'ranks',
       einsatz: 'operation',
       event: 'event',
@@ -284,13 +282,13 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
   // Helper function to get logo URL from site settings
   const getLogoUrl = (): string => {
     const fallback = '/images/logo.jpg'
-    
+
     if (!siteSettings?.logo) {
       return fallback
     }
 
     const logo = siteSettings.logo
-    
+
     // If logo is just an ID (not populated), return fallback
     if (typeof logo === 'number') {
       return fallback
@@ -299,12 +297,12 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     // If logo is a Media object
     if (typeof logo === 'object' && logo !== null) {
       const media = logo as Media
-      
+
       // Try url property first (Vercel Blob or other storage)
       if (media.url && typeof media.url === 'string' && media.url.trim()) {
         return media.url
       }
-      
+
       // Fallback to filename if url is not available
       if (media.filename && typeof media.filename === 'string') {
         return `/media/${media.filename}`
@@ -322,7 +320,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
   // Build navigation items dynamically, including pages with menu configuration
   const navItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [...baseNavItems]
-    
+
     if (!pages || pages.length === 0) {
       // Add contact at the end if no pages
       items.push({ label: 'CONTACT', href: '/kontakt' })
@@ -333,9 +331,12 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     const menuPages = pages.filter((page) => {
       // Include pages that have a menuLabel set
       const menuLabel = page.menuLabel
-      return menuLabel && (
-        (typeof menuLabel === 'string' && menuLabel.trim()) ||
-        (typeof menuLabel === 'object' && menuLabel !== null && Object.values(menuLabel).some(v => v && typeof v === 'string' && v.trim()))
+      return (
+        menuLabel &&
+        ((typeof menuLabel === 'string' && menuLabel.trim()) ||
+          (typeof menuLabel === 'object' &&
+            menuLabel !== null &&
+            Object.values(menuLabel).some((v) => v && typeof v === 'string' && v.trim())))
       )
     })
 
@@ -414,12 +415,13 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
         .filter((child) => {
           const childParent = child.menuParent
           if (!childParent) return false
-          
+
           // Handle both object and ID references
-          const parentId = typeof childParent === 'object' && childParent !== null
-            ? (childParent as any).id || childParent
-            : childParent
-          
+          const parentId =
+            typeof childParent === 'object' && childParent !== null
+              ? (childParent as any).id || childParent
+              : childParent
+
           return parentId === topItemId || String(parentId) === String(topItemId)
         })
         .sort((a, b) => {
@@ -486,7 +488,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
 
     // Add contact at the end
     items.push({ label: 'CONTACT', href: '/kontakt' })
-    
+
     return items
   }, [pages, locale])
 
@@ -496,23 +498,17 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo/Emblem + Brand Name */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center gap-3 group transition-transform hover:scale-105 min-w-0 flex-1 lg:flex-initial"
             >
               {/* Logo Image */}
               {logoUrl && (
                 <div className="relative w-11 h-11 flex-shrink-0">
-                  <Image
-                    src={logoUrl}
-                    alt={logoAlt}
-                    fill
-                    className="object-contain"
-                    sizes="44px"
-                  />
+                  <Image src={logoUrl} alt={logoAlt} fill className="object-contain" sizes="44px" />
                 </div>
               )}
-              
+
               {/* Brand Name */}
               <span className="text-xl md:text-2xl font-bold tracking-tight truncate leading-none max-w-[calc(100vw-12rem)] lg:max-w-none lg:whitespace-nowrap">
                 {siteName}
@@ -532,9 +528,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                   {item.hasDropdown ? (
                     <div className="relative h-full flex items-center">
                       {item.isLabelOnly ? (
-                        <span
-                          className="h-full px-2 text-sm font-semibold uppercase tracking-wide flex items-center text-white"
-                        >
+                        <span className="h-full px-2 text-sm font-semibold uppercase tracking-wide flex items-center text-white">
                           <span className="leading-none">{item.label}</span>
                         </span>
                       ) : item.href ? (
@@ -575,14 +569,14 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                           }`}
                         />
                       </button>
-                      
+
                       {/* Dropdown Menu */}
                       {openDropdown === item.label && (
-                        <div 
+                        <div
                           className="absolute top-full left-0 mt-1 bg-fire border border-red-500 rounded-md shadow-lg min-w-[200px] max-h-96 overflow-y-auto z-[100] animate-fade-in animate-slide-in-from-top-2 custom-scrollbar"
                           style={{
                             scrollbarWidth: 'thin',
-                            scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(220, 38, 38, 0.2)'
+                            scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(220, 38, 38, 0.2)',
                           }}
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -596,7 +590,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                 categories.map((category) => {
                                   const categoryLabel = getCategoryLabel(category, locale)
                                   const categoryPath = getCategoryPathFromLib(category, locale)
-                                  
+
                                   return (
                                     <Link
                                       key={category.id}
@@ -676,12 +670,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 className="flex items-center justify-center w-10 h-10 text-white hover:text-red-200 transition-colors"
                 aria-label="Search"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -700,12 +689,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 className="flex items-center justify-center w-10 h-10 text-white hover:text-red-200 transition-colors"
                 aria-label="Search"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -721,30 +705,30 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 aria-expanded={mobileOpen}
                 aria-label="Toggle navigation"
               >
-              <svg
-                className="w-6 h-6 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                style={{ transform: mobileOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
-              >
-                {mobileOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
+                <svg
+                  className="w-6 h-6 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  style={{ transform: mobileOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                >
+                  {mobileOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -816,29 +800,59 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 {isSearching ? (
                   <div className="p-8 text-center">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-red-600 border-t-transparent"></div>
-                    <p className="mt-4 text-gray-600">{locale === 'de' ? 'Suche läuft...' : 'Searching...'}</p>
+                    <p className="mt-4 text-gray-600">
+                      {locale === 'de' ? 'Suche läuft...' : 'Searching...'}
+                    </p>
                   </div>
                 ) : searchQuery.trim().length < 2 ? (
                   <div className="p-8 text-center text-gray-500">
-                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
-                    <p>{locale === 'de' ? 'Geben Sie mindestens 2 Zeichen ein, um zu suchen' : 'Type at least 2 characters to search'}</p>
+                    <p>
+                      {locale === 'de'
+                        ? 'Geben Sie mindestens 2 Zeichen ein, um zu suchen'
+                        : 'Type at least 2 characters to search'}
+                    </p>
                   </div>
                 ) : searchResults.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
-                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     <p>{locale === 'de' ? 'Keine Ergebnisse gefunden' : 'No results found'}</p>
                   </div>
                 ) : (
                   <div>
                     <div className="px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border-b border-gray-200">
-                      {searchResults.length} {searchResults.length === 1 
-                        ? (locale === 'de' ? 'Ergebnis' : 'result')
-                        : (locale === 'de' ? 'Ergebnisse' : 'results')
-                      }
+                      {searchResults.length}{' '}
+                      {searchResults.length === 1
+                        ? locale === 'de'
+                          ? 'Ergebnis'
+                          : 'result'
+                        : locale === 'de'
+                          ? 'Ergebnisse'
+                          : 'results'}
                     </div>
                     <ul className="divide-y divide-gray-100">
                       {searchResults.map((post) => (
@@ -861,13 +875,23 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <svg
+                                      className="w-8 h-8 text-gray-400"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                      />
                                     </svg>
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Content */}
                               <div className="flex-1 min-w-0 flex flex-col gap-2">
                                 <div className="flex items-start justify-between gap-3">
@@ -882,8 +906,18 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                     )}
                                     {post.categoryLabel && (
                                       <div className="flex items-center gap-2">
-                                        <svg className="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        <svg
+                                          className="w-4 h-4 text-red-600 flex-shrink-0"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                          />
                                         </svg>
                                         <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded">
                                           {post.categoryLabel}
@@ -975,39 +1009,39 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                         </button>
                       </div>
                       {openDropdown === item.label && (
-                        <div 
+                        <div
                           className="pl-4 mt-1 space-y-1 animate-fade-in animate-slide-in-from-top-2 max-h-64 overflow-y-auto custom-scrollbar"
                           style={{
                             scrollbarWidth: 'thin',
-                            scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(220, 38, 38, 0.2)'
+                            scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(220, 38, 38, 0.2)',
                           }}
                         >
-            {item.dynamicDropdown && item.label === 'NEWS' ? (
+                          {item.dynamicDropdown && item.label === 'NEWS' ? (
                             categoriesLoading ? (
                               <div className="px-4 py-2 text-sm text-white/70">
                                 {locale === 'de' ? 'Lädt...' : 'Loading...'}
                               </div>
                             ) : (
-                                categories.map((category) => {
-                                  const categoryLabel = getCategoryLabel(category, locale)
-                                  const categoryPath = getCategoryPathFromLib(category, locale)
-                                  
-                                  return (
-                                    <Link
-                                      key={category.id}
-                                      href={`/${categoryPath}?lang=${locale}`}
-                                      className="block px-4 py-2 text-sm text-white/90 hover:bg-red-500 rounded transition-colors cursor-pointer capitalize"
-                                      style={{ touchAction: 'manipulation' }}
-                                      onClick={(e) => {
-                                        // Allow the link to navigate first
-                                        setOpenDropdown(null)
-                                        setMobileOpen(false)
-                                      }}
-                                    >
-                                      {categoryLabel}
-                                    </Link>
-                                  )
-                                })
+                              categories.map((category) => {
+                                const categoryLabel = getCategoryLabel(category, locale)
+                                const categoryPath = getCategoryPathFromLib(category, locale)
+
+                                return (
+                                  <Link
+                                    key={category.id}
+                                    href={`/${categoryPath}?lang=${locale}`}
+                                    className="block px-4 py-2 text-sm text-white/90 hover:bg-red-500 rounded transition-colors cursor-pointer capitalize"
+                                    style={{ touchAction: 'manipulation' }}
+                                    onClick={(e) => {
+                                      // Allow the link to navigate first
+                                      setOpenDropdown(null)
+                                      setMobileOpen(false)
+                                    }}
+                                  >
+                                    {categoryLabel}
+                                  </Link>
+                                )
+                              })
                             )
                           ) : (
                             item.dropdownItems?.map((subItem) => (
@@ -1053,7 +1087,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                   )}
                 </div>
               ))}
-
             </div>
           </div>
         )}
@@ -1061,4 +1094,3 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     </header>
   )
 }
-

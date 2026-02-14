@@ -19,7 +19,7 @@ export default async function ClerkPage({ searchParams }: Props) {
   try {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
-    
+
     const tasksResult = await payload.find({
       collection: 'tasks',
       sort: 'order',
@@ -33,19 +33,20 @@ export default async function ClerkPage({ searchParams }: Props) {
 
   // Fetch clerk page data from CMS
   const pageData = {
-    title: locale === 'de' ? 'Kanzlei der FF-Droß' : 'Clerk of FF-Droß',
-    intro: locale === 'de' 
-      ? 'Wir sind sehr stolz darüber einige sehr aktive Mitglieder in unseren Reihen zu haben, doch wir freuen uns auch sehr, wenn wir neue Kameraden in unseren Reihen begrüßen dürfen. Bei Interesse melden Sie sich einfach bei unserem Kanzler.'
-      : 'We are very proud to have some very active members in our ranks, but we are also very happy to welcome new comrades to our ranks. If you are interested, please contact our clerk.',
+    title: locale === 'de' ? 'Chargen der FF-Droß' : 'Clerk of FF-Droß',
+    intro:
+      locale === 'de'
+        ? 'Wir sind sehr stolz darüber einige sehr aktive Mitglieder in unseren Reihen zu haben, doch wir freuen uns auch sehr, wenn wir neue Kameraden in unseren Reihen begrüßen dürfen. Bei Interesse melden Sie sich einfach bei unserem Kanzler.'
+        : 'We are very proud to have some very active members in our ranks, but we are also very happy to welcome new comrades to our ranks. If you are interested, please contact our clerk.',
     teamMembers: [] as any[],
   }
 
   let clerkTeam: any[] = []
-  
+
   try {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
-    
+
     // Fetch the first clerk document (typically there will be only one)
     const clerkResult = await payload.find({
       collection: 'clerk',
@@ -58,7 +59,7 @@ export default async function ClerkPage({ searchParams }: Props) {
       const clerk = clerkResult.docs[0]
       pageData.title = clerk.title || pageData.title
       pageData.intro = clerk.intro || pageData.intro
-      
+
       // Process team members
       if (clerk.teamMembers && Array.isArray(clerk.teamMembers)) {
         // Sort by order
@@ -67,13 +68,14 @@ export default async function ClerkPage({ searchParams }: Props) {
           const orderB = b.order ?? 0
           return orderA - orderB
         })
-        
+
         clerkTeam = sortedMembers.map((member: any, index: number) => {
           // Get profile image URL
-          const profileImage = typeof member.image === 'object' && member.image?.url 
-            ? member.image.url 
-            : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&auto=format'
-          
+          const profileImage =
+            typeof member.image === 'object' && member.image?.url
+              ? member.image.url
+              : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&auto=format'
+
           // Get bio text
           let bio = ''
           if (member.bio) {
@@ -84,25 +86,25 @@ export default async function ClerkPage({ searchParams }: Props) {
               bio = bioObj[locale] || bioObj.en || bioObj.de || ''
             }
           }
-          
+
           // Get audio URL
-          const audioUrl = typeof member.audio === 'object' && member.audio?.url 
-            ? member.audio.url 
-            : null
-          
+          const audioUrl =
+            typeof member.audio === 'object' && member.audio?.url ? member.audio.url : null
+
           // Get card media
           let cardImageUrl = null
           let cardVideoUrl = null
           if (member.cardMedia) {
             if (member.cardMedia.mediaType === 'image' && member.cardMedia.image) {
-              cardImageUrl = typeof member.cardMedia.image === 'object' && member.cardMedia.image?.url
-                ? member.cardMedia.image.url
-                : null
+              cardImageUrl =
+                typeof member.cardMedia.image === 'object' && member.cardMedia.image?.url
+                  ? member.cardMedia.image.url
+                  : null
             } else if (member.cardMedia.mediaType === 'video' && member.cardMedia.videoUrl) {
               cardVideoUrl = member.cardMedia.videoUrl
             }
           }
-          
+
           return {
             id: member.id || index,
             name: member.name || '',
@@ -147,10 +149,13 @@ export default async function ClerkPage({ searchParams }: Props) {
         <section className="relative min-h-[400px] md:min-h-[500px] bg-gradient-to-br from-gray-900 via-red-600 to-red-500 overflow-hidden">
           {/* Modern Geometric Pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `linear-gradient(30deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%), linear-gradient(60deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)`,
-              backgroundSize: '60px 60px',
-            }}></div>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `linear-gradient(30deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%), linear-gradient(60deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)`,
+                backgroundSize: '60px 60px',
+              }}
+            ></div>
           </div>
 
           {/* Animated Gradient Orbs */}
@@ -168,10 +173,7 @@ export default async function ClerkPage({ searchParams }: Props) {
               xmlns="http://www.w3.org/2000/svg"
               preserveAspectRatio="none"
             >
-              <path
-                d="M0 0L1440 0L1440 120L0 120Z"
-                fill="white"
-              />
+              <path d="M0 0L1440 0L1440 120L0 120Z" fill="white" />
             </svg>
           </div>
 
@@ -216,11 +218,9 @@ export default async function ClerkPage({ searchParams }: Props) {
 
         {/* Our Tasks Section */}
         <OurTasksClient tasks={tasks} locale={locale} />
-
       </div>
 
       <FireBrigadeFooter initialLocale={locale} />
     </>
   )
 }
-

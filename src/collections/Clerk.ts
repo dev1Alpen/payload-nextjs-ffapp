@@ -5,11 +5,11 @@ export const Clerk: CollectionConfig = {
   labels: {
     singular: {
       en: 'Clerk',
-      de: 'Kanzlei',
+      de: 'Chargen',
     },
     plural: {
       en: 'Clerk',
-      de: 'Kanzlei',
+      de: 'Chargen',
     },
   },
   admin: {
@@ -18,7 +18,7 @@ export const Clerk: CollectionConfig = {
     group: 'Pages',
     description: {
       en: 'Manage the clerk page heading and team members',
-      de: 'Verwalten Sie den Kanzlei-Seitentitel und die Teammitglieder',
+      de: 'Verwalten Sie den Chargen-Seitentitel und die Teammitglieder',
     },
     listSearchableFields: ['title'],
   },
@@ -27,7 +27,7 @@ export const Clerk: CollectionConfig = {
     create: async ({ req: { user, payload } }) => {
       // Only allow admin to create, and only if no documents exist (singleton pattern)
       if (!user || !user.roles?.includes('admin')) return false
-      
+
       try {
         const existing = await payload.find({
           collection: 'clerk',
@@ -60,7 +60,9 @@ export const Clerk: CollectionConfig = {
             overrideAccess: true,
           })
           if (existing.totalDocs > 0) {
-            throw new Error('Only one Clerk record is allowed. Please update the existing record instead.')
+            throw new Error(
+              'Only one Clerk record is allowed. Please update the existing record instead.',
+            )
           }
         }
       },
@@ -89,7 +91,7 @@ export const Clerk: CollectionConfig = {
         },
         placeholder: {
           en: 'Clerk of FF-Droß',
-          de: 'Kanzlei der FF-Droß',
+          de: 'Chargen der FF-Droß',
         },
       },
     },
@@ -325,4 +327,3 @@ export const Clerk: CollectionConfig = {
   ],
   timestamps: true,
 }
-

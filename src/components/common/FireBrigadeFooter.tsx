@@ -204,7 +204,7 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
                   href={`/clerk${locale ? `?lang=${locale}` : ''}`}
                   className="text-white hover:text-fire transition-colors duration-200 text-sm"
                 >
-                  {locale === 'de' ? 'Kanzlei' : 'Clerk'}
+                  {locale === 'de' ? 'Chargen' : 'Clerk'}
                 </Link>
               </li>
               <li>
