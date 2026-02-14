@@ -1660,10 +1660,10 @@
   dependencies:
     date-fns "4.1.0"
 
-"@payloadcms/translations@^3.76.0":
-  version "3.76.0"
-  resolved "https://registry.yarnpkg.com/@payloadcms/translations/-/translations-3.76.0.tgz#58556a992e55c31623699fddd25e0436179cc60e"
-  integrity sha512-Mny6IXOQS2nXIyOwKkWtenHs/3aBt8evc1AoMxGU/hQLe8Lcmbi8ua4lsTAY+vMXoL3z+7ns20EbBqM2Ld3eNA==
+"@payloadcms/translations@^3.76.1":
+  version "3.76.1"
+  resolved "https://registry.yarnpkg.com/@payloadcms/translations/-/translations-3.76.1.tgz#3a631cbeb85e86b7dbee0c9784ac5bc7247c0076"
+  integrity sha512-oNELMK5ZubeRk+/b3SVru+zbksDMfVbf8Fq03rHxiBeAsS/bPvzpV/oZc+M2HavVVq0meaILinryC1hvE21ukA==
   dependencies:
     date-fns "4.1.0"
 

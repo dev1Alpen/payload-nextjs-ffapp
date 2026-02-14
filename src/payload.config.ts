@@ -4,6 +4,8 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { en } from '@payloadcms/translations/languages/en'
+import { de } from '@payloadcms/translations/languages/de'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -71,13 +73,17 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     meta: {
-      titleSuffix: '', // Remove "Payload" branding from the browser tab title
+      titleSuffix: '',
     },
     components: {
       graphics: {
         Logo: '/components/admin/AdminLogo',
       },
     },
+  },
+  i18n: {
+    fallbackLanguage: 'en',
+    supportedLanguages: { en, de },
   },
   localization: {
     locales: ['en', 'de'],
@@ -105,17 +111,17 @@ export default buildConfig({
   ],
   globals: [ContactInfo, CookieBanner, AlertTopBar, SidebarWidgets, MapSettings, SiteSettings],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '', // Ensure that PAYLOAD_SECRET is set in .env
+  secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: postgresAdapter({
     pool: {
-      host: process.env.DB_HOST, // Use the environment variables for DB connection
+      host: process.env.DB_HOST,
       port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME, // Ensure this is pointing to the correct database name
+      database: process.env.DB_NAME,
     },
     push: process.env.NODE_ENV === 'development',
   }),
@@ -127,7 +133,7 @@ export default buildConfig({
       collections: {
         media: true,
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN, // Ensure the BLOB token is set
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     }),
   ],
 })
