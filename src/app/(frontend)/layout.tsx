@@ -8,27 +8,22 @@ import CookieBanner from '../../components/common/CookieBanner'
 import SharedDataProvider from '../../components/common/SharedDataProvider'
 import type { Category, ContactInfo, SiteSetting, Media, Page } from '@/payload-types'
 
-// Helper function to get favicon URL from site settings
 function getFaviconUrl(favicon: SiteSetting['favicon']): string | undefined {
   if (!favicon) {
     return undefined
   }
 
-  // If favicon is just an ID (not populated), return undefined
   if (typeof favicon === 'number') {
     return undefined
   }
 
-  // If favicon is a Media object
   if (typeof favicon === 'object' && favicon !== null) {
     const media = favicon as Media
 
-    // Try url property first (Vercel Blob or other storage)
     if (media.url && typeof media.url === 'string' && media.url.trim()) {
       return media.url
     }
 
-    // Fallback to filename if url is not available
     if (media.filename && typeof media.filename === 'string') {
       return `/media/${media.filename}`
     }
@@ -49,7 +44,7 @@ export async function generateMetadata() {
       siteSettings = await payload.findGlobal({
         slug: 'site-settings',
         locale,
-        depth: 1, // Populate favicon relationship
+        depth: 1,
       })
     } catch (error) {
       console.error('Error fetching site settings in metadata:', error)
@@ -59,9 +54,13 @@ export async function generateMetadata() {
   }
 
   const faviconUrl = siteSettings?.favicon ? getFaviconUrl(siteSettings.favicon) : undefined
+  const siteTitle = siteSettings?.siteName || 'Site Title'
 
   return {
-    title: siteSettings?.siteName || '',
+    title: {
+      template: `%s | ${siteTitle}`,
+      default: siteTitle,
+    },
     description: siteSettings?.siteDescription || '',
     icons: faviconUrl
       ? {
@@ -73,7 +72,6 @@ export async function generateMetadata() {
   }
 }
 
-// Helper function to get locale from cookies
 async function getLocaleFromCookies(): Promise<'en' | 'de'> {
   const headersList = await headers()
   const cookieHeader = headersList.get('cookie') || ''
@@ -84,16 +82,13 @@ async function getLocaleFromCookies(): Promise<'en' | 'de'> {
       return locale
     }
   }
-  return 'de' // Default to German
+  return 'de'
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
-
-  // Get locale from cookies (defaults to 'de')
   const locale = await getLocaleFromCookies()
 
-  // Fetch categories, contact info, site settings, and pages server-side
   let categories: Category[] = []
   let contactInfo: ContactInfo | null = null
   let siteSettings: SiteSetting | null = null
@@ -103,7 +98,6 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
 
-    // Fetch categories
     try {
       const categoriesResult = await payload.find({
         collection: 'categories',
@@ -121,7 +115,6 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       console.error('Error fetching categories in layout:', error)
     }
 
-    // Fetch contact info
     try {
       contactInfo = await payload.findGlobal({
         slug: 'contact-info',
@@ -131,18 +124,16 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       console.error('Error fetching contact info in layout:', error)
     }
 
-    // Fetch site settings
     try {
       siteSettings = await payload.findGlobal({
         slug: 'site-settings',
         locale,
-        depth: 1, // Populate logo and favicon relationships
+        depth: 1,
       })
     } catch (error) {
       console.error('Error fetching site settings in layout:', error)
     }
 
-    // Fetch published pages
     try {
       const pagesResult = await payload.find({
         collection: 'pages',
@@ -163,7 +154,6 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     console.error('Error initializing Payload in layout:', error)
   }
 
-  // Helper function to get favicon URL
   const getFaviconUrlFromSettings = (favicon: SiteSetting['favicon']): string | null => {
     if (!favicon) {
       return null

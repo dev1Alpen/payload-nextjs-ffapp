@@ -16,7 +16,6 @@ interface FireBrigadeFooterProps {
 
 export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeFooterProps) {
   const year = new Date().getFullYear()
-  // Get data from shared context
   const { categories, categoriesLoading, contactInfo, contactInfoLoading } = useSharedData()
   const [locale, setLocale] = useState<Locale>(initialLocale)
   const [langDropdownOpen, setLangDropdownOpen] = useState(false)
@@ -25,7 +24,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Fetch sidebar widgets for social media links
   const [sidebarWidgets, setSidebarWidgets] = useState<{
     facebook?: { enabled?: boolean; pageUrl?: string | null }
     instagram?: { enabled?: boolean; username?: string | null }
@@ -46,7 +44,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
     fetchSidebarWidgets()
   }, [locale])
 
-  // Get locale from URL params, cookie, or initial locale
   useEffect(() => {
     const getCookieValue = (name: string): string | null => {
       if (typeof document === 'undefined') return null
@@ -54,27 +51,23 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
       return match ? decodeURIComponent(match[2]) : null
     }
 
-    // Priority 1: URL parameter (highest priority) - always respect URL
     const paramLocale = searchParams?.get('lang')
     if (paramLocale === 'en' || paramLocale === 'de') {
       setLocale(paramLocale)
       return
     }
 
-    // Priority 2: If no URL param, use initialLocale from server
     if (initialLocale) {
       setLocale(initialLocale)
       return
     }
 
-    // Priority 3: Cookie (only if no initialLocale was provided)
     const cookieLocale = getCookieValue('locale')
     if (cookieLocale === 'en' || cookieLocale === 'de') {
       setLocale(cookieLocale)
       return
     }
 
-    // Priority 4: Default to German
     setLocale('de')
   }, [searchParams, initialLocale])
 
@@ -90,7 +83,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
     params.set('lang', newLocale)
     const query = params.toString()
 
-    // Use startTransition for smoother updates
     startTransition(() => {
       router.replace(query ? `${pathname}?${query}` : pathname)
       router.refresh()
@@ -99,14 +91,11 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
 
   const localeOptions = [
     { code: 'en' as Locale, label: 'English', flag: '🇬🇧' },
-    { code: 'at' as Locale, label: 'Österreich', flag: '🇦🇹' },
+    { code: 'de' as Locale, label: 'AT', flag: '🇦🇹' },
   ]
 
-  const currentLocale = localeOptions.find((opt) => opt.code === locale) || localeOptions[1] // Default to German (index 1)
+  const currentLocale = localeOptions.find((opt) => opt.code === locale) || localeOptions[1]
 
-  // Categories and contact info are now provided by SharedDataContext, no need to fetch here
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
@@ -122,16 +111,13 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
 
   return (
     <footer className="w-full text-white" style={{ backgroundColor: '#1B1714' }}>
-      {/* Dark red strip at top */}
       <div className="w-full h-1 bg-fire"></div>
 
-      {/* Main footer content */}
       <div className="w-full max-w-[1170px] mx-auto px-4 md:px-8 lg:px-12 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
-          {/* Column 1: NEWS */}
           <div>
             <h3 className="text-white text-base font-bold uppercase tracking-wide mb-6">
-              {locale === 'de' ? 'NEWS' : 'NEWS'}
+              {locale === 'de' ? 'AKTUELLES' : 'NEWS'}
             </h3>
             {categoriesLoading ? (
               <div className="text-white/70 text-sm">
@@ -177,7 +163,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
             )}
           </div>
 
-          {/* Column 2: ABOUT US */}
           <div>
             <h3 className="text-white text-base font-bold uppercase tracking-wide mb-6">
               {locale === 'de' ? 'ÜBER UNS' : 'ABOUT US'}
@@ -234,7 +219,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
             </ul>
           </div>
 
-          {/* Column 3: CONTACT */}
           <div>
             <h3 className="text-white text-base font-bold uppercase tracking-wide mb-6">
               {locale === 'de' ? 'KONTAKT' : 'CONTACT'}
@@ -252,7 +236,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
                 }}
               >
                 {(() => {
-                  // Convert Lexical content to HTML
                   let addressHtml = ''
                   try {
                     if (contactInfo.address && typeof contactInfo.address === 'object') {
@@ -317,14 +300,11 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
         </div>
       </div>
 
-      {/* Bottom section */}
       <div className="border-t border-gray-700 py-4">
         <div className="w-full max-w-[1170px] mx-auto px-4 md:px-8 lg:px-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Copyright */}
             <div className="text-white text-sm">© {year} Droß Volunteer Fire Department</div>
 
-            {/* Social Media Icons */}
             <div className="flex items-center gap-4">
               {sidebarWidgets?.facebook?.enabled && sidebarWidgets?.facebook?.pageUrl && (
                 <a
@@ -354,7 +334,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
               )}
             </div>
 
-            {/* Language Switcher */}
             <div className="relative" ref={langDropdownRef}>
               <button
                 type="button"
@@ -369,7 +348,7 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
               >
                 <span className="text-xl leading-none">{currentLocale.flag}</span>
                 <span className="font-semibold tracking-wide">
-                  {currentLocale.code.toUpperCase()}
+                  {currentLocale.label.toUpperCase()}
                 </span>
                 <ArrowIcon
                   direction="down"
@@ -378,7 +357,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
                 />
               </button>
 
-              {/* Dropdown Menu */}
               {langDropdownOpen && (
                 <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
                   <div className="py-1">
@@ -417,7 +395,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
               )}
             </div>
 
-            {/* Legal Links + Cookie settings */}
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <Link
                 href={`/impressum${locale ? `?lang=${locale}` : ''}`}
@@ -437,7 +414,6 @@ export default function FireBrigadeFooter({ initialLocale = 'de' }: FireBrigadeF
                 type="button"
                 onClick={() => {
                   if (typeof window !== 'undefined') {
-                    // Re-open the GDPR banner using the last saved consent values.
                     window.dispatchEvent(new CustomEvent('open-cookie-settings'))
                   }
                 }}

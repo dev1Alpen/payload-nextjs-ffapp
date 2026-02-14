@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
@@ -6,15 +7,32 @@ import Gallery from '@/components/home/Gallery'
 import FireBrigadeFooter from '@/components/common/FireBrigadeFooter'
 import '../styles.css'
 
-export async function generateMetadata() {
-  return {
-    title: 'Gallery - Dross Fire Department',
-    description: 'Browse our collection of images, videos, and audio from the Dross Fire Department',
-  }
-}
-
 type Props = {
   searchParams: Promise<{ lang?: string }>
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams
+  const locale = (params.lang === 'en' || params.lang === 'de' ? params.lang : 'de') as 'en' | 'de'
+
+  let siteTitle = ''
+  try {
+    const payloadConfig = await config
+    const payload = await getPayload({ config: payloadConfig })
+    const siteSettings = await payload.findGlobal({
+      slug: 'site-settings',
+      locale,
+    })
+    siteTitle = (siteSettings as any)?.siteName || ''
+  } catch {
+    siteTitle = ''
+  }
+
+  const pageTitle = locale === 'de' ? 'Galerie' : 'Gallery'
+
+  return {
+    title: siteTitle ? `${pageTitle} | ${siteTitle}` : pageTitle,
+  }
 }
 
 export default async function GalleryPage({ searchParams }: Props) {
@@ -27,15 +45,13 @@ export default async function GalleryPage({ searchParams }: Props) {
     const payloadConfig = await config
     const payload = await getPayload({ config: payloadConfig })
 
-    // Fetch gallery items from CMS
-    // Need depth: 1 to populate media relationship
     try {
       const galleryResult = await payload.find({
         collection: 'gallery',
         sort: 'order',
         locale,
-        depth: 1, // Populate media relationship
-        limit: 200, // Get more items for the dedicated gallery page
+        depth: 1,
+        limit: 200,
       })
       galleryItems = galleryResult.docs || []
     } catch (error) {
@@ -57,4 +73,3 @@ export default async function GalleryPage({ searchParams }: Props) {
     </>
   )
 }
-

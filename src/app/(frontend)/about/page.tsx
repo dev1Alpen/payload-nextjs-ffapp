@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/common/Navigation'
@@ -6,6 +7,15 @@ import FireBrigadeFooter from '@/components/common/FireBrigadeFooter'
 
 type Props = {
   searchParams: Promise<{ lang?: string }>
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams
+  const locale = (params.lang === 'en' || params.lang === 'de' ? params.lang : 'de') as 'en' | 'de'
+
+  return {
+    title: locale === 'de' ? 'Über uns' : 'About us',
+  }
 }
 
 export default async function AboutPage({ searchParams }: Props) {
@@ -100,7 +110,6 @@ export default async function AboutPage({ searchParams }: Props) {
       </Suspense>
 
       <div className="relative bg-gradient-to-b from-gray-50 via-white to-gray-50 pb-16">
-        {/* Decorative background */}
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 overflow-hidden">
           <div className="mx-auto max-w-7xl px-4 md:px-8 lg:px-12">
             <div className="h-40 md:h-52 bg-[url('/images/banner.png')] bg-cover bg-center opacity-20 rounded-b-3xl" />
@@ -122,7 +131,6 @@ export default async function AboutPage({ searchParams }: Props) {
           />
         </div>
 
-        {/* Hero */}
         <section className="pt-8 md:pt-10">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-[3fr,2fr] items-center">
@@ -134,9 +142,7 @@ export default async function AboutPage({ searchParams }: Props) {
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-fire tracking-tight mb-4">
                   {t.title}
                 </h1>
-                <p className="text-lg md:text-xl text-gray-700 max-w-2xl mb-6">
-                  {t.heroSubtitle}
-                </p>
+                <p className="text-lg md:text-xl text-gray-700 max-w-2xl mb-6">{t.heroSubtitle}</p>
                 <div className="flex flex-wrap gap-4">
                   <div className="rounded-2xl bg-white/80 backdrop-blur shadow-md px-5 py-4 border border-red-100">
                     <p className="text-3xl font-extrabold text-fire">24/7</p>
@@ -175,7 +181,6 @@ export default async function AboutPage({ searchParams }: Props) {
           </div>
         </section>
 
-        {/* Story & Mission */}
         <section className="mt-16">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-[3fr,2fr] items-start">
@@ -186,14 +191,10 @@ export default async function AboutPage({ searchParams }: Props) {
                 <p className="text-gray-700 text-base md:text-lg mb-4 leading-relaxed">
                   {t.introText1}
                 </p>
-                <p className="text-gray-700 text-base md:text-lg leading-relaxed">
-                  {t.introText2}
-                </p>
+                <p className="text-gray-700 text-base md:text-lg leading-relaxed">{t.introText2}</p>
               </div>
               <div className="rounded-3xl bg-white/90 shadow-lg border border-red-100 p-6 md:p-7">
-                <h3 className="text-lg md:text-xl font-bold text-fire mb-4">
-                  {t.missionTitle}
-                </h3>
+                <h3 className="text-lg md:text-xl font-bold text-fire mb-4">{t.missionTitle}</h3>
                 <ul className="space-y-3">
                   {t.missionPoints.map((point) => (
                     <li key={point} className="flex gap-3">
@@ -220,7 +221,6 @@ export default async function AboutPage({ searchParams }: Props) {
           </div>
         </section>
 
-        {/* Values */}
         <section className="mt-16">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
             <div className="flex items-center justify-between gap-4 mb-8">
@@ -247,7 +247,6 @@ export default async function AboutPage({ searchParams }: Props) {
           </div>
         </section>
 
-        {/* People & Stats */}
         <section className="mt-16">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-[3fr,2fr] items-center">
@@ -255,9 +254,7 @@ export default async function AboutPage({ searchParams }: Props) {
                 <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-4">
                   {t.peopleTitle}
                 </h2>
-                <p className="text-gray-700 text-base md:text-lg leading-relaxed">
-                  {t.peopleText}
-                </p>
+                <p className="text-gray-700 text-base md:text-lg leading-relaxed">{t.peopleText}</p>
               </div>
               <div className="grid grid-cols-3 gap-3 md:gap-4">
                 <div className="rounded-2xl bg-white/90 backdrop-blur shadow-md px-4 py-3 border border-red-100 text-center">
@@ -274,21 +271,20 @@ export default async function AboutPage({ searchParams }: Props) {
                 </div>
                 <div className="rounded-2xl bg-white/90 backdrop-blur shadow-md px-4 py-3 border border-red-100 text-center">
                   <p className="text-2xl md:text-3xl font-extrabold text-fire">10+</p>
-                  <p className="text-[11px] md:text-xs text-gray-600 font-medium">
-                    {t.statsYouth}
-                  </p>
+                  <p className="text-[11px] md:text-xs text-gray-600 font-medium">{t.statsYouth}</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* History Link Section */}
         <section className="mt-16">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
             <div className="bg-gradient-to-r from-fire to-red-500 rounded-3xl shadow-xl p-8 md:p-12 text-white text-center">
               <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                {locale === 'de' ? 'Erfahren Sie mehr über unsere Geschichte' : 'Learn more about our history'}
+                {locale === 'de'
+                  ? 'Erfahren Sie mehr über unsere Geschichte'
+                  : 'Learn more about our history'}
               </h3>
               <p className="text-lg mb-6 opacity-95 max-w-2xl mx-auto">
                 {locale === 'de'
@@ -300,12 +296,7 @@ export default async function AboutPage({ searchParams }: Props) {
                 className="inline-flex items-center gap-2 bg-white text-fire font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl"
               >
                 <span>{locale === 'de' ? 'Zur Geschichte' : 'View History'}</span>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -323,5 +314,3 @@ export default async function AboutPage({ searchParams }: Props) {
     </>
   )
 }
-
-

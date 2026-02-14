@@ -9,20 +9,21 @@ import { useSharedData } from '@/contexts/SharedDataContext'
 import { getCategoryLabel, getCategoryPath as getCategoryPathFromLib } from '@/lib/categories'
 import type { Media } from '@/payload-types'
 
+type Locale = 'en' | 'de'
+
 interface NavItem {
   label: string
-  href?: string // Optional for label-only items
+  href?: string
   hasDropdown?: boolean
   dropdownItems?: { label: string; href: string }[]
-  dynamicDropdown?: boolean // Flag to indicate this dropdown should be populated dynamically
-  isLabelOnly?: boolean // Flag to indicate this menu item is a label only (no link)
+  dynamicDropdown?: boolean
+  isLabelOnly?: boolean
 }
 
-// Base navigation items (pages will be added dynamically)
-const baseNavItems: NavItem[] = [
-  { label: 'HOMEPAGE', href: '/' },
+const getBaseNavItems = (locale: Locale): NavItem[] => [
+  { label: locale === 'de' ? 'STARTSEITE' : 'HOMEPAGE', href: '/' },
   {
-    label: 'ABOUT US',
+    label: locale === 'de' ? 'ÜBER UNS' : 'ABOUT US',
     href: '/about',
     hasDropdown: true,
     dropdownItems: [
@@ -34,11 +35,14 @@ const baseNavItems: NavItem[] = [
       { label: 'Reserve', href: '/reserve' },
     ],
   },
-  { label: 'NEWS', href: '/all_posts', hasDropdown: true, dynamicDropdown: true },
-  { label: 'GALLERY', href: '/gallery' },
+  {
+    label: locale === 'de' ? 'AKTUELLES' : 'NEWS',
+    href: '/all_posts',
+    hasDropdown: true,
+    dynamicDropdown: true,
+  },
+  { label: locale === 'de' ? 'GALERIE' : 'GALLERY', href: '/gallery' },
 ]
-
-type Locale = 'en' | 'de'
 
 interface NavigationProps {
   initialLocale?: Locale
@@ -61,9 +65,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     }>
   >([])
   const [isSearching, setIsSearching] = useState(false)
-  // Get categories, pages, and site settings from shared context
-  const { categories, categoriesLoading, pages, pagesLoading, siteSettings } = useSharedData()
-  // Initialize with initialLocale (defaults to 'de' if not provided)
+  const { categories, categoriesLoading, pages, siteSettings } = useSharedData()
   const [locale, setLocale] = useState<Locale>(initialLocale)
   const mobileRef = useRef<HTMLDivElement>(null)
   const searchModalRef = useRef<HTMLDivElement>(null)
@@ -73,7 +75,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Get locale from URL params, cookie, or initial locale
   useEffect(() => {
     const getCookieValue = (name: string): string | null => {
       if (typeof document === 'undefined') return null
@@ -81,29 +82,23 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       return match ? decodeURIComponent(match[2]) : null
     }
 
-    // Priority 1: URL parameter (highest priority) - always respect URL
     const paramLocale = searchParams?.get('lang')
     if (paramLocale === 'en' || paramLocale === 'de') {
       setLocale(paramLocale)
       return
     }
 
-    // Priority 2: If no URL param, use initialLocale from server
-    // This ensures navigation matches page content on first load
-    // Don't let cookie override the server-determined locale when there's no URL param
     if (initialLocale) {
       setLocale(initialLocale)
       return
     }
 
-    // Priority 3: Cookie (only if no initialLocale was provided)
     const cookieLocale = getCookieValue('locale')
     if (cookieLocale === 'en' || cookieLocale === 'de') {
       setLocale(cookieLocale)
       return
     }
 
-    // Priority 4: Default to German
     setLocale('de')
   }, [searchParams, initialLocale])
 
@@ -111,30 +106,14 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as HTMLElement
 
-      // Don't close if clicking on a link - let the link handle navigation first
-      if (target.tagName === 'A') {
-        return
-      }
+      if (target.tagName === 'A') return
+      if (target.tagName === 'BUTTON' || target.closest('button')) return
 
-      // Don't close if clicking on a button (including dropdown toggle buttons)
-      // The button's onClick with stopPropagation will prevent this from firing
-      if (target.tagName === 'BUTTON' || target.closest('button')) {
-        return
-      }
-
-      // Check if click is inside any dropdown container
-      // This includes the dropdown menu (but not the button, which we already checked above)
       let clickedInsideDropdown = false
       Object.values(dropdownRefs.current).forEach((ref) => {
-        if (ref && ref.contains(target)) {
-          clickedInsideDropdown = true
-        }
+        if (ref && ref.contains(target)) clickedInsideDropdown = true
       })
-
-      // Don't close dropdowns if clicking inside a dropdown container
-      if (clickedInsideDropdown) {
-        return
-      }
+      if (clickedInsideDropdown) return
 
       if (mobileRef.current && !mobileRef.current.contains(target)) {
         setMobileOpen(false)
@@ -146,19 +125,15 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
         setSearchResults([])
       }
 
-      // Close dropdowns when clicking outside
       setOpenDropdown(null)
     }
 
-    // Use 'click' instead of 'mousedown' for better mobile compatibility
-    // Use bubble phase (false) so button onClick fires first, then we check
     document.addEventListener('click', handleClickOutside, false)
     return () => {
       document.removeEventListener('click', handleClickOutside, false)
     }
   }, [])
 
-  // Focus search input when modal opens and handle Escape key
   useEffect(() => {
     if (searchModalOpen && searchInputRef.current) {
       searchInputRef.current.focus()
@@ -178,9 +153,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     }
   }, [searchModalOpen])
 
-  // Categories are now provided by SharedDataContext, no need to fetch here
-
-  // Search posts when query changes
   useEffect(() => {
     const performSearch = async () => {
       if (searchQuery.trim().length < 2) {
@@ -191,22 +163,15 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       setIsSearching(true)
       try {
         const searchUrl = `/api/search?q=${encodeURIComponent(searchQuery.trim())}&lang=${locale}`
-        console.log('Fetching search results from:', searchUrl)
         const response = await fetch(searchUrl)
-
-        console.log('Search response status:', response.status)
 
         if (response.ok) {
           const data = await response.json()
-          console.log('Search response data:', data)
           setSearchResults(data.posts || [])
         } else {
-          const errorText = await response.text()
-          console.error('Search API error:', response.status, response.statusText, errorText)
           setSearchResults([])
         }
-      } catch (error) {
-        console.error('Search error:', error)
+      } catch {
         setSearchResults([])
       } finally {
         setIsSearching(false)
@@ -218,28 +183,20 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
   }, [searchQuery, locale])
 
   const isActive = (href: string) => {
-    if (href === '/') {
-      return pathname === '/'
-    }
+    if (href === '/') return pathname === '/'
     return pathname?.startsWith(href)
   }
 
   const handleDropdownToggle = (label: string, event?: React.MouseEvent) => {
-    // Stop propagation to prevent document click handler from interfering
     if (event) {
       event.stopPropagation()
       event.preventDefault()
     }
-    // Toggle the dropdown using functional update to ensure correct state
     setOpenDropdown((current) => (current === label ? null : label))
   }
 
   const handleSearchResultClick = (post: { id: number; slug: string; category: string | null }) => {
-    // Safety check: ensure post exists and has required properties
-    if (!post || !post.id) {
-      console.error('Invalid post in search result:', post)
-      return
-    }
+    if (!post || !post.id) return
 
     try {
       const categoryPath = post.category ? getCategoryPath(post.category) : 'news'
@@ -251,9 +208,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       setSearchModalOpen(false)
       setSearchQuery('')
       setSearchResults([])
-    } catch (error) {
-      console.error('Error handling search result click:', error, post)
-    }
+    } catch {}
   }
 
   const getCategoryPath = (category: string): string => {
@@ -279,57 +234,38 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     return categoryMap[category] || 'news'
   }
 
-  // Helper function to get logo URL from site settings
   const getLogoUrl = (): string => {
     const fallback = '/images/logo.jpg'
 
-    if (!siteSettings?.logo) {
-      return fallback
-    }
+    if (!siteSettings?.logo) return fallback
 
     const logo = siteSettings.logo
+    if (typeof logo === 'number') return fallback
 
-    // If logo is just an ID (not populated), return fallback
-    if (typeof logo === 'number') {
-      return fallback
-    }
-
-    // If logo is a Media object
     if (typeof logo === 'object' && logo !== null) {
       const media = logo as Media
-
-      // Try url property first (Vercel Blob or other storage)
-      if (media.url && typeof media.url === 'string' && media.url.trim()) {
-        return media.url
-      }
-
-      // Fallback to filename if url is not available
-      if (media.filename && typeof media.filename === 'string') {
-        return `/media/${media.filename}`
-      }
+      if (media.url && typeof media.url === 'string' && media.url.trim()) return media.url
+      if (media.filename && typeof media.filename === 'string') return `/media/${media.filename}`
     }
 
     return fallback
   }
 
-  // Get logo URL and site name
   const logoUrl = getLogoUrl()
   const siteName = siteSettings?.siteName || 'Feuerwehr Droß'
   const logoAlt = siteSettings?.siteName ? `${siteName} Logo` : 'Feuerwehr Droß Logo'
 
-  // Build navigation items dynamically, including pages with menu configuration
   const navItems: NavItem[] = useMemo(() => {
-    const items: NavItem[] = [...baseNavItems]
+    const items: NavItem[] = [...getBaseNavItems(locale)]
+
+    const contactLabel = locale === 'de' ? 'KONTAKT' : 'CONTACT'
 
     if (!pages || pages.length === 0) {
-      // Add contact at the end if no pages
-      items.push({ label: 'CONTACT', href: '/kontakt' })
+      items.push({ label: contactLabel, href: '/kontakt' })
       return items
     }
 
-    // Filter pages that have menuLabel (they should appear in menu)
     const menuPages = pages.filter((page) => {
-      // Include pages that have a menuLabel set
       const menuLabel = page.menuLabel
       return (
         menuLabel &&
@@ -341,143 +277,89 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
     })
 
     if (menuPages.length === 0) {
-      // Add contact at the end if no menu pages
-      items.push({ label: 'CONTACT', href: '/kontakt' })
+      items.push({ label: contactLabel, href: '/kontakt' })
       return items
     }
 
-    // Helper function to get localized value
-    const getLocalizedValue = (value: any, locale: 'en' | 'de'): string => {
+    const getLocalizedValue = (value: any, locale: Locale): string => {
       if (!value) return ''
       if (typeof value === 'string') return value
       if (typeof value === 'object' && value !== null) {
-        return value[locale] || value['de'] || value['en'] || ''
+        return value[locale] || value.de || value.en || ''
       }
       return String(value)
     }
 
-    // Helper function to get top item label (from menuLabel field)
-    const getTopItemLabel = (page: any): string => {
-      // Use menuLabel field for top items
-      return getLocalizedValue(page.menuLabel, locale)
-    }
+    const getTopItemLabel = (page: any): string => getLocalizedValue(page.menuLabel, locale)
 
-    // Helper function to get sub item title (from title or menuLabel field)
     const getSubItemTitle = (page: any): string => {
-      // Check for menuLabel override first
       const menuLabel = page.menuLabel
-      if (menuLabel) {
-        return getLocalizedValue(menuLabel, locale)
-      }
-      // Use title field for sub items
+      if (menuLabel) return getLocalizedValue(menuLabel, locale)
       return getLocalizedValue(page.title, locale)
     }
 
-    // Helper function to get page slug
-    const getPageSlug = (page: any): string => {
-      return getLocalizedValue(page.slug, locale)
-    }
+    const getPageSlug = (page: any): string => getLocalizedValue(page.slug, locale)
 
-    // Helper function to get page ID
-    const getPageId = (page: any): string | number => {
-      return page.id || ''
-    }
+    const getPageId = (page: any): string | number => page.id || ''
 
-    // Separate top items from sub items based on isTopItem
-    const topItems = menuPages.filter((page) => {
-      return page.isTopItem === true
-    })
+    const topItems = menuPages.filter((page) => page.isTopItem === true)
+    const subItems = menuPages.filter((page) => page.isTopItem === false)
 
-    const subItems = menuPages.filter((page) => {
-      return page.isTopItem === false
-    })
+    topItems.sort((a, b) =>
+      getTopItemLabel(a).toLowerCase().localeCompare(getTopItemLabel(b).toLowerCase()),
+    )
 
-    // Sort top items alphabetically by label
-    topItems.sort((a, b) => {
-      const labelA = getTopItemLabel(a).toLowerCase()
-      const labelB = getTopItemLabel(b).toLowerCase()
-      return labelA.localeCompare(labelB)
-    })
-
-    // Build menu items from top items
     topItems.forEach((topItem) => {
       const topItemId = getPageId(topItem)
       const topItemLabel = getTopItemLabel(topItem)
-
       if (!topItemLabel) return
 
-      // Check if top item has a slug (indicates it has content and should be clickable)
       const topItemSlug = getPageSlug(topItem)
       const hasContent = topItemSlug && topItemSlug.trim() !== ''
 
-      // Find children (sub items) of this top item
       const children = subItems
         .filter((child) => {
           const childParent = child.menuParent
           if (!childParent) return false
-
-          // Handle both object and ID references
           const parentId =
             typeof childParent === 'object' && childParent !== null
               ? (childParent as any).id || childParent
               : childParent
-
           return parentId === topItemId || String(parentId) === String(topItemId)
         })
-        .sort((a, b) => {
-          // Sort sub items alphabetically by title
-          const titleA = getSubItemTitle(a).toLowerCase()
-          const titleB = getSubItemTitle(b).toLowerCase()
-          return titleA.localeCompare(titleB)
-        })
+        .sort((a, b) =>
+          getSubItemTitle(a).toLowerCase().localeCompare(getSubItemTitle(b).toLowerCase()),
+        )
 
       if (hasContent) {
-        // Top item has content - make it clickable
         if (children.length > 0) {
-          // Top item has content AND children - clickable link with dropdown
-          const dropdownItems = children.map((child) => {
-            const childSlug = getPageSlug(child)
-            const childTitle = getSubItemTitle(child)
-            return {
-              label: childTitle,
-              href: `/pages/${childSlug}`,
-            }
-          })
-
           items.push({
             label: topItemLabel.toUpperCase(),
             href: `/pages/${topItemSlug}`,
             hasDropdown: true,
-            dropdownItems,
+            dropdownItems: children.map((child) => ({
+              label: getSubItemTitle(child),
+              href: `/pages/${getPageSlug(child)}`,
+            })),
           })
         } else {
-          // Top item has content but no children - clickable link only
           items.push({
             label: topItemLabel.toUpperCase(),
             href: `/pages/${topItemSlug}`,
           })
         }
       } else {
-        // Top item has no content - label only
         if (children.length > 0) {
-          // Top item has children but no content - dropdown only
-          const dropdownItems = children.map((child) => {
-            const childSlug = getPageSlug(child)
-            const childTitle = getSubItemTitle(child)
-            return {
-              label: childTitle,
-              href: `/pages/${childSlug}`,
-            }
-          })
-
           items.push({
             label: topItemLabel.toUpperCase(),
             hasDropdown: true,
-            dropdownItems,
-            isLabelOnly: true, // No link, just label
+            dropdownItems: children.map((child) => ({
+              label: getSubItemTitle(child),
+              href: `/pages/${getPageSlug(child)}`,
+            })),
+            isLabelOnly: true,
           })
         } else {
-          // Top item with no children and no content - just label (no link)
           items.push({
             label: topItemLabel.toUpperCase(),
             isLabelOnly: true,
@@ -486,9 +368,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       }
     })
 
-    // Add contact at the end
-    items.push({ label: 'CONTACT', href: '/kontakt' })
-
+    items.push({ label: contactLabel, href: '/kontakt' })
     return items
   }, [pages, locale])
 
@@ -497,25 +377,20 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
       <nav className="bg-fire text-white shadow-lg">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Logo/Emblem + Brand Name */}
             <Link
               href="/"
               className="flex items-center gap-3 group transition-transform hover:scale-105 min-w-0 flex-1 lg:flex-initial"
             >
-              {/* Logo Image */}
               {logoUrl && (
                 <div className="relative w-11 h-11 flex-shrink-0">
                   <Image src={logoUrl} alt={logoAlt} fill className="object-contain" sizes="44px" />
                 </div>
               )}
-
-              {/* Brand Name */}
               <span className="text-xl md:text-2xl font-bold tracking-tight truncate leading-none max-w-[calc(100vw-12rem)] lg:max-w-none lg:whitespace-nowrap">
                 {siteName}
               </span>
             </Link>
 
-            {/* Right: Navigation Links */}
             <div className="hidden lg:flex items-center gap-4 h-full">
               {navItems.map((item) => (
                 <div
@@ -541,11 +416,9 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                           }`}
                         >
                           <span className="leading-none">{item.label}</span>
-                          {/* Active indicator animation */}
                           {item.href && isActive(item.href) && (
                             <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-red-300" />
                           )}
-                          {/* Hover underline animation */}
                           <span className="absolute bottom-0 left-2 h-0.5 bg-red-200 w-0 group-hover:w-[calc(100%-1rem)] transition-all duration-300" />
                         </Link>
                       ) : (
@@ -553,6 +426,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                           <span className="leading-none">{item.label}</span>
                         </span>
                       )}
+
                       <button
                         onClick={(e) => handleDropdownToggle(item.label, e)}
                         className={`h-full px-0 text-sm transition-all duration-300 flex items-center ${
@@ -570,7 +444,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                         />
                       </button>
 
-                      {/* Dropdown Menu */}
                       {openDropdown === item.label && (
                         <div
                           className="absolute top-full left-0 mt-1 bg-fire border border-red-500 rounded-md shadow-lg min-w-[200px] max-h-96 overflow-y-auto z-[100] animate-fade-in animate-slide-in-from-top-2 custom-scrollbar"
@@ -581,7 +454,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="py-2">
-                            {item.dynamicDropdown && item.label === 'NEWS' ? (
+                            {item.dynamicDropdown ? (
                               categoriesLoading ? (
                                 <div className="px-4 py-2 text-sm text-white/70">
                                   {locale === 'de' ? 'Lädt...' : 'Loading...'}
@@ -627,8 +500,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                     </div>
                   ) : (
                     <>
-                      {/* Separator before Contact */}
-                      {item.label === 'CONTACT' && (
+                      {item.label === (locale === 'de' ? 'KONTAKT' : 'CONTACT') && (
                         <div className="h-6 w-px bg-white/30 mx-3 flex-shrink-0" />
                       )}
                       {item.isLabelOnly ? (
@@ -645,11 +517,9 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                           }`}
                         >
                           <span className="leading-none">{item.label}</span>
-                          {/* Active indicator animation */}
                           {item.href && isActive(item.href) && (
                             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-400" />
                           )}
-                          {/* Hover underline animation */}
                           <span className="absolute bottom-0 left-0 h-0.5 bg-red-200 w-0 group-hover:w-full transition-all duration-300" />
                         </Link>
                       ) : (
@@ -662,7 +532,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 </div>
               ))}
 
-              {/* Search Icon Button - where language toggle was */}
               <div className="h-6 w-px bg-white/30 mx-3 flex-shrink-0" />
               <button
                 type="button"
@@ -681,7 +550,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
               </button>
             </div>
 
-            {/* Mobile: Search and Menu Buttons */}
             <div className="lg:hidden flex items-center gap-2 flex-shrink-0 ml-2 min-w-[88px]">
               <button
                 type="button"
@@ -733,7 +601,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
           </div>
         </div>
 
-        {/* Search Modal */}
         {searchModalOpen && (
           <div
             className="fixed inset-0 z-[100] flex items-start justify-center px-4 bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -743,7 +610,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
               ref={searchModalRef}
               className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-in-from-top-2"
             >
-              {/* Search Input */}
               <div className="p-4 border-b border-gray-200">
                 <div className="relative">
                   <input
@@ -795,7 +661,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 </div>
               </div>
 
-              {/* Search Results */}
               <div className="max-h-[60vh] overflow-y-auto">
                 {isSearching ? (
                   <div className="p-8 text-center">
@@ -863,7 +728,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                             className="w-full text-left p-4 hover:bg-gray-50 transition-colors group"
                           >
                             <div className="flex items-start gap-4">
-                              {/* Image */}
                               <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 relative shadow-sm">
                                 {post.imageUrl ? (
                                   <Image
@@ -892,7 +756,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                 )}
                               </div>
 
-                              {/* Content */}
                               <div className="flex-1 min-w-0 flex flex-col gap-2">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="flex-1 min-w-0">
@@ -940,7 +803,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                 )}
               </div>
 
-              {/* Close Button */}
               <div className="p-4 border-t border-gray-200 flex justify-end">
                 <button
                   type="button"
@@ -958,7 +820,6 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
           </div>
         )}
 
-        {/* Mobile Menu */}
         {mobileOpen && (
           <div
             ref={mobileRef}
@@ -1002,12 +863,11 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                         >
                           <ArrowIcon
                             direction="down"
-                            className={`w-4 h-4 transition-transform duration-300 ${
-                              openDropdown === item.label ? 'rotate-180' : ''
-                            }`}
+                            className={`w-4 h-4 transition-transform duration-300 ${openDropdown === item.label ? 'rotate-180' : ''}`}
                           />
                         </button>
                       </div>
+
                       {openDropdown === item.label && (
                         <div
                           className="pl-4 mt-1 space-y-1 animate-fade-in animate-slide-in-from-top-2 max-h-64 overflow-y-auto custom-scrollbar"
@@ -1016,7 +876,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                             scrollbarColor: 'rgba(255, 255, 255, 0.3) rgba(220, 38, 38, 0.2)',
                           }}
                         >
-                          {item.dynamicDropdown && item.label === 'NEWS' ? (
+                          {item.dynamicDropdown ? (
                             categoriesLoading ? (
                               <div className="px-4 py-2 text-sm text-white/70">
                                 {locale === 'de' ? 'Lädt...' : 'Loading...'}
@@ -1032,8 +892,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                     href={`/${categoryPath}?lang=${locale}`}
                                     className="block px-4 py-2 text-sm text-white/90 hover:bg-red-500 rounded transition-colors cursor-pointer capitalize"
                                     style={{ touchAction: 'manipulation' }}
-                                    onClick={(e) => {
-                                      // Allow the link to navigate first
+                                    onClick={() => {
                                       setOpenDropdown(null)
                                       setMobileOpen(false)
                                     }}
@@ -1050,8 +909,7 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                                 href={`${subItem.href}?lang=${locale}`}
                                 className="block px-4 py-2 text-sm text-white/90 hover:bg-red-500 rounded transition-colors cursor-pointer"
                                 style={{ touchAction: 'manipulation' }}
-                                onClick={(e) => {
-                                  // Allow the link to navigate first
+                                onClick={() => {
                                   setOpenDropdown(null)
                                   setMobileOpen(false)
                                 }}

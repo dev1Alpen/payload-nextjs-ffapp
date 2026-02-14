@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
@@ -12,11 +13,19 @@ type Props = {
   searchParams: Promise<{ lang?: string }>
 }
 
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams
+  const locale = (params.lang === 'en' || params.lang === 'de' ? params.lang : 'de') as 'en' | 'de'
+
+  return {
+    title: locale === 'de' ? 'Kontakt' : 'Contact',
+  }
+}
+
 export default async function ContactPage({ searchParams }: Props) {
   const params = await searchParams
   const locale = (params.lang === 'en' || params.lang === 'de' ? params.lang : 'de') as 'en' | 'de'
 
-  // Fetch contact info and map settings from CMS
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
 
@@ -75,7 +84,6 @@ export default async function ContactPage({ searchParams }: Props) {
       </div>
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-16 px-4 pt-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-6xl font-extrabold text-fire mb-4 tracking-tight">
               {t.title}
@@ -86,23 +94,16 @@ export default async function ContactPage({ searchParams }: Props) {
             </p>
           </div>
 
-          {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12">
-            {/* Left Column: Address */}
             <div className="order-2 lg:order-1">
-              <ContactInfoSection
-                address={contactInfo?.address}
-                locale={locale}
-              />
+              <ContactInfoSection address={contactInfo?.address} locale={locale} />
             </div>
 
-            {/* Right Column: Contact Form */}
             <div className="order-1 lg:order-2">
               <ContactForm locale={locale} />
             </div>
           </div>
 
-          {/* Map Section */}
           <MapSection mapConfig={mapSettings} locale={locale} />
         </div>
       </div>

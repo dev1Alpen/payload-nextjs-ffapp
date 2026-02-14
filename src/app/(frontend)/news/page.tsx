@@ -12,27 +12,29 @@ type Props = {
 export default async function NewsPage({ searchParams }: Props) {
   const params = await searchParams
   const locale = (params.lang === 'en' || params.lang === 'de' ? params.lang : 'de') as 'en' | 'de'
-  
-  // If no category in query params, detect from URL path (news = "news" category)
+
   let category = params.category || null
+
   if (!category) {
-    // Try to find "news" category by slug
     try {
       const payloadConfig = await config
       const payload = await getPayload({ config: payloadConfig })
+
       const categoryResult = await payload.find({
         collection: 'categories',
         where: {
           or: [
             { 'slug.en': { equals: 'news' } },
             { 'slug.de': { equals: 'news' } },
+            { 'slug.de': { equals: 'aktuelles' } },
           ],
         },
         limit: 1,
         locale,
       })
+
       if (categoryResult.docs.length > 0) {
-        category = categoryResult.docs[0].id.toString() // Pass as string ID
+        category = categoryResult.docs[0].id.toString()
       }
     } catch (error) {
       console.error('Error finding news category:', error)
@@ -49,4 +51,3 @@ export default async function NewsPage({ searchParams }: Props) {
     </>
   )
 }
-

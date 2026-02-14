@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Post, Media, User, Category } from '@/payload-types'
+import type { Post, Media, User } from '@/payload-types'
 import Navigation from '@/components/common/Navigation'
 import FireBrigadeFooter from '@/components/common/FireBrigadeFooter'
 import ArrowIcon from '@/components/common/ArrowIcon'
@@ -23,14 +23,11 @@ function formatDate(dateString: string | null | undefined): string {
 }
 
 function getImageUrl(image: Media | number | null | undefined): string {
-  const fallback = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80'
-
+  const fallback =
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80'
   if (!image) return fallback
-
   if (typeof image === 'number') return fallback
-
   if (image.url) return image.url
-
   return fallback
 }
 
@@ -41,9 +38,10 @@ function getAuthorName(author: User | number | null | undefined): string {
 }
 
 function getPostLink(postItem: Post, locale: 'en' | 'de' = 'de'): string {
-  const postCategoryPath = postItem.category && typeof postItem.category !== 'number'
-    ? getCategoryPath(postItem.category, locale)
-    : 'news'
+  const postCategoryPath =
+    postItem.category && typeof postItem.category !== 'number'
+      ? getCategoryPath(postItem.category, locale)
+      : 'news'
   if (postItem.slug) {
     return `/${postCategoryPath}/${postItem.slug}${locale ? `?lang=${locale}` : ''}`
   }
@@ -58,7 +56,11 @@ type Props = {
 export async function generateMetadata({ params, searchParams }: Props) {
   const { slug } = await params
   const searchParamsResolved = await searchParams
-  const locale = (searchParamsResolved.lang === 'en' || searchParamsResolved.lang === 'de' ? searchParamsResolved.lang : 'de') as 'en' | 'de'
+  const locale = (
+    searchParamsResolved.lang === 'en' || searchParamsResolved.lang === 'de'
+      ? searchParamsResolved.lang
+      : 'de'
+  ) as 'en' | 'de'
 
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
@@ -66,22 +68,10 @@ export async function generateMetadata({ params, searchParams }: Props) {
   let post: Post | null = null
 
   try {
-    // Try to find post by slug
     const slugResult = await payload.find({
       collection: 'posts',
       where: {
-        and: [
-          {
-            slug: {
-              equals: slug,
-            },
-          },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
-        ],
+        and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
       },
       limit: 1,
       depth: 0,
@@ -91,23 +81,11 @@ export async function generateMetadata({ params, searchParams }: Props) {
     if (slugResult.docs.length > 0) {
       post = slugResult.docs[0]
     } else {
-      // Try fallback locale
       const fallbackLocale = locale === 'de' ? 'en' : 'de'
       const fallbackResult = await payload.find({
         collection: 'posts',
         where: {
-          and: [
-            {
-              slug: {
-                equals: slug,
-              },
-            },
-            {
-              _status: {
-                equals: 'published',
-              },
-            },
-          ],
+          and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
         },
         limit: 1,
         depth: 0,
@@ -122,11 +100,12 @@ export async function generateMetadata({ params, searchParams }: Props) {
     console.error('Error fetching post for metadata:', error)
   }
 
-  // Get title from meta or fallback to post title
-  const getLocalizedValue = (value: unknown, locale: 'en' | 'de', fallback: string = ''): string => {
-    if (typeof value === 'string') {
-      return value
-    }
+  const getLocalizedValue = (
+    value: unknown,
+    locale: 'en' | 'de',
+    fallback: string = '',
+  ): string => {
+    if (typeof value === 'string') return value
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, string>
       return obj[locale] || obj.de || obj.en || fallback
@@ -138,7 +117,6 @@ export async function generateMetadata({ params, searchParams }: Props) {
   const metaTitle = post?.meta?.metaTitle
     ? getLocalizedValue(post.meta.metaTitle, locale, postTitle)
     : postTitle
-
   const metaDescription = post?.meta?.metaDescription
     ? getLocalizedValue(post.meta.metaDescription, locale, '')
     : ''
@@ -152,56 +130,34 @@ export async function generateMetadata({ params, searchParams }: Props) {
 export default async function PostPage({ params, searchParams }: Props) {
   const { slug } = await params
   const searchParamsResolved = await searchParams
-  const locale = (searchParamsResolved.lang === 'en' || searchParamsResolved.lang === 'de' ? searchParamsResolved.lang : 'de') as 'en' | 'de'
+  const locale = (
+    searchParamsResolved.lang === 'en' || searchParamsResolved.lang === 'de'
+      ? searchParamsResolved.lang
+      : 'de'
+  ) as 'en' | 'de'
 
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
 
-  // Try to find post by slug first, then by ID
-  // Since slugs are localized, we need to search in both locales
   let post: Post | null = null
 
   try {
-    // First try to find by slug in the requested locale
     let slugResult = await payload.find({
       collection: 'posts',
       where: {
-        and: [
-          {
-            slug: {
-              equals: slug,
-            },
-          },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
-        ],
+        and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
       },
       limit: 1,
       depth: 2,
       locale,
     })
 
-    // If not found in requested locale, try the other locale
     if (slugResult.docs.length === 0) {
       const fallbackLocale = locale === 'de' ? 'en' : 'de'
       slugResult = await payload.find({
         collection: 'posts',
         where: {
-          and: [
-            {
-              slug: {
-                equals: slug,
-              },
-            },
-            {
-              _status: {
-                equals: 'published',
-              },
-            },
-          ],
+          and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
         },
         limit: 1,
         depth: 2,
@@ -211,7 +167,6 @@ export default async function PostPage({ params, searchParams }: Props) {
 
     if (slugResult.docs.length > 0) {
       post = slugResult.docs[0]
-      // Re-fetch with the requested locale to get the correct localized content
       if (post.id) {
         const localizedPost = await payload.findByID({
           collection: 'posts',
@@ -224,7 +179,6 @@ export default async function PostPage({ params, searchParams }: Props) {
         }
       }
     } else {
-      // If not found by slug, try by ID (in case slug is actually an ID)
       const id = parseInt(slug, 10)
       if (!isNaN(id)) {
         const idResult = await payload.findByID({
@@ -233,8 +187,6 @@ export default async function PostPage({ params, searchParams }: Props) {
           depth: 2,
           locale,
         })
-
-        // Check if it's published
         if (idResult && idResult._status === 'published') {
           post = idResult
         }
@@ -248,57 +200,30 @@ export default async function PostPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Fetch previous and next posts in the same category
   let previousPost: Post | null = null
   let nextPost: Post | null = null
 
   try {
     const currentDate = post.publishedDate || post.createdAt
-    
-    // Get category ID for querying
-    const categoryId = typeof post.category === 'number' 
-      ? post.category 
-      : post.category?.id
-    
+
+    const categoryId = typeof post.category === 'number' ? post.category : post.category?.id
     if (!categoryId) {
-      // No category, skip previous/next posts
       throw new Error('Post has no category')
     }
 
-    // Get previous post (older, published before current)
     const previousResult = await payload.find({
       collection: 'posts',
       where: {
         and: [
-          {
-            category: {
-              equals: categoryId,
-            },
-          },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
+          { category: { equals: categoryId } },
+          { _status: { equals: 'published' } },
           {
             or: [
-              {
-                publishedDate: {
-                  less_than: currentDate,
-                },
-              },
+              { publishedDate: { less_than: currentDate } },
               {
                 and: [
-                  {
-                    publishedDate: {
-                      exists: false,
-                    },
-                  },
-                  {
-                    createdAt: {
-                      less_than: currentDate,
-                    },
-                  },
+                  { publishedDate: { exists: false } },
+                  { createdAt: { less_than: currentDate } },
                 ],
               },
             ],
@@ -315,40 +240,19 @@ export default async function PostPage({ params, searchParams }: Props) {
       previousPost = previousResult.docs[0]
     }
 
-    // Get next post (newer, published after current)
     const nextResult = await payload.find({
       collection: 'posts',
       where: {
         and: [
-          {
-            category: {
-              equals: categoryId,
-            },
-          },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
+          { category: { equals: categoryId } },
+          { _status: { equals: 'published' } },
           {
             or: [
-              {
-                publishedDate: {
-                  greater_than: currentDate,
-                },
-              },
+              { publishedDate: { greater_than: currentDate } },
               {
                 and: [
-                  {
-                    publishedDate: {
-                      exists: false,
-                    },
-                  },
-                  {
-                    createdAt: {
-                      greater_than: currentDate,
-                    },
-                  },
+                  { publishedDate: { exists: false } },
+                  { createdAt: { greater_than: currentDate } },
                 ],
               },
             ],
@@ -366,10 +270,8 @@ export default async function PostPage({ params, searchParams }: Props) {
     }
   } catch (error) {
     console.error('Error fetching previous/next posts:', error)
-    // Continue without navigation if there's an error
   }
 
-  // Convert Lexical content to HTML
   let contentHtml = ''
   try {
     if (post.content && typeof post.content === 'object') {
@@ -379,14 +281,18 @@ export default async function PostPage({ params, searchParams }: Props) {
     }
   } catch (error) {
     console.error('Error converting Lexical content to HTML:', error)
-    // Fallback: extract text from Lexical JSON structure
     if (post.content && typeof post.content === 'object' && 'root' in post.content) {
       const extractText = (node: unknown): string => {
         if (typeof node === 'string') return node
         if (node && typeof node === 'object' && 'text' in node) {
           return String((node as { text: string }).text)
         }
-        if (node && typeof node === 'object' && 'children' in node && Array.isArray((node as { children: unknown[] }).children)) {
+        if (
+          node &&
+          typeof node === 'object' &&
+          'children' in node &&
+          Array.isArray((node as { children: unknown[] }).children)
+        ) {
           return (node as { children: unknown[] }).children.map(extractText).join('')
         }
         return ''
@@ -398,6 +304,8 @@ export default async function PostPage({ params, searchParams }: Props) {
     }
   }
 
+  const backLabel = locale === 'de' ? 'Zurück zu Aktuelles' : 'Back to News'
+
   return (
     <>
       <Suspense fallback={<div className="h-16 bg-fire" />}>
@@ -405,7 +313,6 @@ export default async function PostPage({ params, searchParams }: Props) {
       </Suspense>
 
       <article className="w-full bg-white min-h-screen">
-        {/* Hero Section with Featured Image as Background */}
         {post.featuredImage ? (
           <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
             <Image
@@ -445,7 +352,12 @@ export default async function PostPage({ params, searchParams }: Props) {
                     <>
                       <span className="text-white/60">•</span>
                       <div className="flex items-center space-x-2">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -463,9 +375,7 @@ export default async function PostPage({ params, searchParams }: Props) {
           </div>
         ) : null}
 
-        {/* Content Section */}
         <div className="w-full max-w-4xl mx-auto px-4 md:px-8 lg:px-12 py-12 md:py-16">
-          {/* Header (if no featured image) */}
           {!post.featuredImage && (
             <div className="mb-8">
               {post.category && typeof post.category !== 'number' && (
@@ -494,7 +404,12 @@ export default async function PostPage({ params, searchParams }: Props) {
                   <>
                     <span className="text-gray-400">•</span>
                     <div className="flex items-center space-x-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -510,31 +425,28 @@ export default async function PostPage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {/* Rich Text Content */}
           <div
             className="max-w-none text-lg [&_h1]:text-4xl [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:font-bold [&_h1]:text-gray-900 [&_h2]:text-3xl [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:font-bold [&_h2]:text-gray-900 [&_h3]:text-2xl [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:font-bold [&_h3]:text-gray-900 [&_h4]:text-xl [&_h4]:mt-4 [&_h4]:mb-2 [&_h4]:font-bold [&_h4]:text-gray-900 [&_h5]:text-lg [&_h5]:mt-3 [&_h5]:mb-2 [&_h5]:font-bold [&_h5]:text-gray-900 [&_h6]:text-base [&_h6]:mt-2 [&_h6]:mb-1 [&_h6]:font-bold [&_h6]:text-gray-900 [&_p]:text-gray-700 [&_p]:mb-4 [&_a]:text-red-600 [&_a]:no-underline hover:[&_a]:text-red-500 [&_strong]:text-gray-900 [&_strong]:font-semibold [&_ul]:text-gray-700 [&_ol]:text-gray-700 [&_li]:my-2"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
 
-          {/* Gallery Section - Display if gallery images exist */}
-          {post.galleryImages && Array.isArray(post.galleryImages) && post.galleryImages.length > 0 && (
-            <div className="mt-12 pt-12 border-t border-gray-200">
-              <PostGallery images={post.galleryImages} title={post.title || undefined} />
-            </div>
-          )}
+          {post.galleryImages &&
+            Array.isArray(post.galleryImages) &&
+            post.galleryImages.length > 0 && (
+              <div className="mt-12 pt-12 border-t border-gray-200">
+                <PostGallery images={post.galleryImages} title={post.title || undefined} />
+              </div>
+            )}
 
-          {/* Previous and Next Post Navigation */}
           {(previousPost || nextPost) && (
             <div className="mt-12 pt-8 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Previous Post (Older) */}
                 {previousPost ? (
                   <Link
                     href={getPostLink(previousPost, locale)}
                     className="group relative overflow-hidden rounded-lg border border-gray-200 hover:border-red-400 transition-all h-48"
                   >
-                    {/* Background Image */}
-                    {previousPost.featuredImage && (
+                    {previousPost.featuredImage ? (
                       <>
                         <Image
                           src={getImageUrl(previousPost.featuredImage)}
@@ -545,12 +457,10 @@ export default async function PostPage({ params, searchParams }: Props) {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40" />
                       </>
-                    )}
-                    {!previousPost.featuredImage && (
+                    ) : (
                       <div className="absolute inset-0 bg-gray-50" />
                     )}
-                    
-                    {/* Content Overlay */}
+
                     <div className="relative h-full flex flex-col justify-end p-6 text-white">
                       <div className="flex items-center space-x-2 text-red-400 text-sm font-semibold mb-2">
                         <ArrowIcon direction="left" className="w-4 h-4" />
@@ -567,17 +477,15 @@ export default async function PostPage({ params, searchParams }: Props) {
                     </div>
                   </Link>
                 ) : (
-                  <div></div>
+                  <div />
                 )}
 
-                {/* Next Post (Newer) - Always on right */}
-                {nextPost && (
+                {nextPost ? (
                   <Link
                     href={getPostLink(nextPost, locale)}
                     className="group relative overflow-hidden rounded-lg border border-gray-200 hover:border-red-400 transition-all h-48"
                   >
-                    {/* Background Image */}
-                    {nextPost.featuredImage && (
+                    {nextPost.featuredImage ? (
                       <>
                         <Image
                           src={getImageUrl(nextPost.featuredImage)}
@@ -588,12 +496,10 @@ export default async function PostPage({ params, searchParams }: Props) {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40" />
                       </>
-                    )}
-                    {!nextPost.featuredImage && (
+                    ) : (
                       <div className="absolute inset-0 bg-gray-50" />
                     )}
-                    
-                    {/* Content Overlay */}
+
                     <div className="relative h-full flex flex-col justify-end p-6 text-white md:text-right">
                       <div className="flex items-center justify-end space-x-2 text-red-400 text-sm font-semibold mb-2">
                         <span>{locale === 'de' ? 'Nächster Beitrag' : 'Next Post'}</span>
@@ -609,13 +515,14 @@ export default async function PostPage({ params, searchParams }: Props) {
                       )}
                     </div>
                   </Link>
-                )}
+                ) : null}
               </div>
             </div>
           )}
 
-          {/* Back to News Link */}
-          <div className={`${previousPost || nextPost ? 'mt-6' : 'mt-12'} pt-8 border-t border-gray-200`}>
+          <div
+            className={`${previousPost || nextPost ? 'mt-6' : 'mt-12'} pt-8 border-t border-gray-200`}
+          >
             <Link
               href={`/news${locale ? `?lang=${locale}` : ''}`}
               className="inline-flex items-center space-x-2 text-red-600 hover:text-red-500 font-semibold transition-colors"
@@ -628,7 +535,7 @@ export default async function PostPage({ params, searchParams }: Props) {
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              <span>{locale === 'de' ? 'Zurück zu allen Beiträgen' : 'Back to all posts'}</span>
+              <span>{backLabel}</span>
             </Link>
           </div>
         </div>
@@ -638,4 +545,3 @@ export default async function PostPage({ params, searchParams }: Props) {
     </>
   )
 }
-
