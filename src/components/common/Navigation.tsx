@@ -386,7 +386,10 @@ export default function Navigation({ initialLocale = 'de' }: NavigationProps = {
                   <Image src={logoUrl} alt={logoAlt} fill className="object-contain" sizes="44px" />
                 </div>
               )}
-              <span className="text-xl md:text-2xl font-bold tracking-tight truncate leading-none max-w-[calc(100vw-12rem)] lg:max-w-none lg:whitespace-nowrap">
+              <span
+                className="min-w-0 truncate font-bold tracking-tight leading-none text-base sm:text-lg md:text-2xl lg:whitespace-nowrap"
+                style={{ fontSize: 'clamp(1rem, 2.2vw, 1.5rem)' }}
+              >
                 {siteName}
               </span>
             </Link>
